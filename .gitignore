@@ -1,0 +1,12 @@
+# project .gitignore
+
+# folders
+ignore/
+.vs/
+bin/
+obj/
+
+#files
+*.csproj.user
+*.txt
+*.txt2
