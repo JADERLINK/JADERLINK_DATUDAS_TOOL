@@ -28,7 +28,7 @@ namespace JADERLINK_DATUDAS_REPACK
 
             for (int i = 0; i < dat.Length; i++)
             {
-                byte[] name = Encoding.UTF8.GetBytes(dat[i].Extension);
+                byte[] name = Encoding.ASCII.GetBytes(dat[i].Extension);
                 stream.Write(name, 0, 4);
             }
 
@@ -46,7 +46,9 @@ namespace JADERLINK_DATUDAS_REPACK
                 {
                     if (dat[i].FileExits)
                     {
-                        archive = File.ReadAllBytes(dat[i].fileInfo.FullName);
+                        BinaryReader br = new BinaryReader(dat[i].fileInfo.OpenRead());
+                        br.BaseStream.Read(archive, 0, (int)dat[i].fileInfo.Length);
+                        br.Close();
                     }
                 }
                 catch (Exception ex)

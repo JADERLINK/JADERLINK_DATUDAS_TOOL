@@ -75,7 +75,7 @@ namespace JADERLINK_DATUDAS_EXTRACT
                 readStream.Read(udasTop, 0, udasTopLenght);
 
                 string FileFullName = basename + "\\" + basename + "_TOP.HEX";
-                idxj.WriteLine("UDAS_TOP:" + FileFullName);
+                idxj.WriteLine("!UDAS_TOP:" + FileFullName);
 
                 try
                 {
@@ -104,7 +104,7 @@ namespace JADERLINK_DATUDAS_EXTRACT
                     readStream.Read(udasMiddle, 0, newlenght);
 
                     string FileFullName = basename + "\\" + basename + "_MIDDLE.HEX";
-                    idxj.WriteLine("UDAS_MIDDLE:" + FileFullName);
+                    idxj.WriteLine("!UDAS_MIDDLE:" + FileFullName);
 
                     try
                     {
@@ -148,7 +148,7 @@ namespace JADERLINK_DATUDAS_EXTRACT
                     int startoffset = (int)UdasList[i][3];
                     int lenght = (int)(readStream.Length - startoffset);
 
-                    //midle
+                    //middle
                     if (i >= 1)
                     {
                         int Mlenght = (int)UdasList[i-1][1];
@@ -164,7 +164,7 @@ namespace JADERLINK_DATUDAS_EXTRACT
                             readStream.Read(udasMiddle, 0, sublenght);
 
                             string FileFullName = basename + "\\" + basename + "_MIDDLE.HEX";
-                            idxj.WriteLine("UDAS_MIDDLE:" + FileFullName);
+                            idxj.WriteLine("!UDAS_MIDDLE:" + FileFullName);
 
                             try
                             {

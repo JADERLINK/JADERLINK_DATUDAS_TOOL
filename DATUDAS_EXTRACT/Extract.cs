@@ -24,7 +24,10 @@ namespace JADERLINK_DATUDAS_EXTRACT
 
                 stream = info.OpenRead();
                 idxj = idxjInfo.CreateText();
-                idx_ = idx_Info.CreateText();
+                if (fileFormat != FileFormat.MAP)
+                {
+                    idx_ = idx_Info.CreateText();
+                }
             }
             catch (Exception ex)
             {
@@ -33,10 +36,10 @@ namespace JADERLINK_DATUDAS_EXTRACT
 
             if (stream != null && idxj != null)
             {
-                idxj.WriteLine(":##############################");
-                idxj.WriteLine(":### JADERLINK DATUDAS TOOL ###");
-                idxj.WriteLine(":##############################");
-                idxj.WriteLine("TOOL_VERSION:V01");
+                idxj.WriteLine("# github.com/JADERLINK/JADERLINK_DATUDAS_TOOL");
+                idxj.WriteLine("# youtube.com/@JADERLINK");
+                idxj.WriteLine("# JADERLINK DATUDAS TOOL By JADERLINK");
+                idxj.WriteLine("TOOL_VERSION:V02");
                 switch (fileFormat)
                 {
                     case FileFormat.DAT:
@@ -66,11 +69,14 @@ namespace JADERLINK_DATUDAS_EXTRACT
                     {
                         Dat a = new Dat(idxj, stream, 0, (int)info.Length, diretory, basename);
 
-                        // .idx
-                        idx_.Write("FileCount = " + a.DatAmount);
-                        for (int i = 0; i < a.DatFiles.Length; i++)
+                        if (fileFormat != FileFormat.MAP)
                         {
-                            idx_.Write(Environment.NewLine + "File_" + i +" = " + a.DatFiles[i]);
+                            // .idx
+                            idx_.Write("FileCount = " + a.DatAmount);
+                            for (int i = 0; i < a.DatFiles.Length; i++)
+                            {
+                                idx_.Write(Environment.NewLine + "File_" + i + " = " + a.DatFiles[i]);
+                            }
                         }
                     }
                     catch (Exception ex)
@@ -112,10 +118,14 @@ namespace JADERLINK_DATUDAS_EXTRACT
                     
                 }
 
-                idxj.WriteLine(":END_FILE");
-                idxj.Close();
-                idx_.Close();
                 stream.Close();
+                idxj.WriteLine("# END_FILE");
+                idxj.Close();
+                if (fileFormat != FileFormat.MAP)
+                {
+                    idx_.Close();
+                }
+
             }
         }
 

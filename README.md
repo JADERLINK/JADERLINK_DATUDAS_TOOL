@@ -12,7 +12,10 @@ License: MIT Licence
 ## **Translate from Portuguese Brazil:**
 
 Programa destinado para extração e reempacotamento dos arquivos dat/udas/map do RE4 das versões de PC (ubisoft/steam) e de PS2.
-<br>Criei esse programa como uma alternativa aos outros programas que tem a mesma proposta.
+<br>Criei esse programa como uma alternativa aos outros programas que têm a mesma proposta.
+
+**Update V.1.0.2**
+<br>Melhorias, e ao fazer repack o programa faz o alinhamento dos arquivos no arquivo dat/udas/map.
 
 # DATUDAS_EXTRACT
 
@@ -29,13 +32,14 @@ Explicação do arquivo, vou usar como exemplo o arquivo "r100.udas" como refer�
 **Conteúdo do idxJ**
 <br>Nota: o Conteúdo com // é informativo e não existe no arquivo original
 <br>Nota2: para fazer comentários no arquivo use o caractere dois pontos ":"
+<br>Nota3: caracteres **# / \\ : !** São usados para comentários.
 
 ```
-:##############################
-:### JADERLINK DATUDAS TOOL ###
-:##############################
+# github.com/JADERLINK/JADERLINK_DATUDAS_TOOL
+# youtube.com/@JADERLINK
+# JADERLINK DATUDAS TOOL By JADERLINK
 //versão de identificação do programa de extração
-TOOL_VERSION:V01
+TOOL_VERSION:V02
 //FILE_FORMAT formato do arquivo a ser recompilado
 // sendo os formados suportados: UDAS, DAT, MAP
 FILE_FORMAT:UDAS
@@ -43,7 +47,8 @@ FILE_FORMAT:UDAS
 // representa o header do udas, 
 //caso arquivo exista, as informações necessárias serão sobrepostas, 
 //caso o arquivo não exista, o programa gerara um header próprio.
-UDAS_TOP:r100\r100_TOP.HEX
+//para esse variável funcionar, você deve tirar o caracter ! do começo do nome.
+!UDAS_TOP:r100\r100_TOP.HEX
 // quantidade de arquivos que vão no Dat/Map, 
 //caso se tratar de um arquivo Udas, 
 //saiba que existe um arquivo dat dentro do Udas
@@ -66,21 +71,23 @@ UDAS_SOUNDFLAG:4
 // UDAS_MIDDLE, arquivo opcional,  exclusiva do Udas,
 // representa os bytes entre o arquivos dat e snd do Udas,
 // são dados ignorados pelo jogo
-UDAS_MIDDLE:r100\r100_MIDDLE.HEX
+//para esse variável funcionar, você deve tirar o caracter ! do começo do nome.
+!UDAS_MIDDLE:r100\r100_MIDDLE.HEX
 // UDAS_END, local do arquivo que fica no final do Udas,
 // seria o arquivo SND/DAS, 
 //nota: é indiferente o formato do arquivo para o programa
 UDAS_END:r100\r100_END.SND
 // textos iniciados com : são apenas comentários
-:END_FILE
+# END_FILE
 ```
 
 # Arquivo .idx
 Leia a explicação acima.
-<br>A explicação desse arquivo é definido, por como é entendida pelo meu programa e não como foi originalmente pensado por "Son of Persia" e "MarioKartN64").
+<br>A explicação desse arquivo é definida, por como é entendida pelo meu programa e não como foi originalmente pensado por "Son of Persia" e "MarioKartN64").
 
 **Conteúdo do idx**
-<br>Nota: o Conteúdo com // é informativo e não existe no arquivo original
+<br>Nota: O conteúdo com // é informativo e não existe no arquivo original.
+<br>Nota2: caracteres **# / \\ : !** São usados para comentários.
 
 ```
 //FileCount, quantidade total de arquivo dat mais o arquivo final do udas
@@ -110,12 +117,12 @@ File_51 = r100\r100_END.SND
 
 * Criei o programa por causa de alguns problemas com a versão do "MarioKartN64":
 * A versão dele cria duas pastas (a principal e uma subpasta), e a minha versão cria somente uma pasta.
-* Ao reempacotar o arquivo Udas, não é considerado o arquivo .idx, mas é colocado todos os arquivos que estão na subpasta, e a minha versão segue oque esta no arquivo .idx
+* Ao reempacotar o arquivo Udas, não é considerado o arquivo .idx, mas é colocado todos os arquivos que estão na subpasta, e a minha versão segue o que está no arquivo .idx
 * A minha versão NÃO cria backup, diferente da versão do "MarioKartN64".
 * O arquivo que ele chamou de "DAS" é nomeado como SND, que nem a versão do "Son of Persia"
-* Adicionado compatiblidade com os arquivos Dat e Map, basicamente dentro do udas tem um arquivo Dat, e o arquivo Map é um arquivo dat com outra extensão.
+* Adicionado compatibilidade com os arquivos Dat e Map, basicamente dentro do Udas tem um arquivo Dat, e o arquivo Map é um arquivo Dat com outra extensão.
 
 -----
 **At.te: JADERLINK**
 
-2023-03-18
+2024-07-02

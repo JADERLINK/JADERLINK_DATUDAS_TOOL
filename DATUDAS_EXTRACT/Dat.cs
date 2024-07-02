@@ -39,7 +39,7 @@ namespace JADERLINK_DATUDAS_EXTRACT
             for (int i = 0; i < amount; i++)
             {
                 int offset = BitConverter.ToInt32(offsetblock, Temp);
-                string format = System.Text.Encoding.UTF8.GetString(nameblock, Temp, 4);
+                string format = Encoding.ASCII.GetString(nameblock, Temp, 4);
                 format = ValidateFormat(format).ToUpperInvariant();
 
                 string FileFullName = basename + "\\" + basename + "_" + i.ToString("D3");
@@ -72,8 +72,6 @@ namespace JADERLINK_DATUDAS_EXTRACT
             {
                 DatFiles[i] = fileList[i].Value;
 
-                string Line = "DAT_" + i.ToString("D3") + ":";
-
                 int subFileLenght = 0;
                 if (i < fileList.Length - 1)
                 {
@@ -90,7 +88,6 @@ namespace JADERLINK_DATUDAS_EXTRACT
                 readStream.Read(endfile, 0, subFileLenght);
                 if (subFileLenght > 0)
                 {
-                    Line += fileList[i].Value;
                     try
                     {
                         File.WriteAllBytes(diretory + fileList[i].Value, endfile);
@@ -101,18 +98,10 @@ namespace JADERLINK_DATUDAS_EXTRACT
                     }
                   
                 }
-                else 
-                {
-                    FileInfo a = new FileInfo(fileList[i].Value);
-                    if (a.Extension.Length > 0)
-                    {
-                        Line += a.Extension;
-                    }
-                }
-                
+
+                string Line = "DAT_" + i.ToString("D3") + ":" + fileList[i].Value;
                 idxj.WriteLine(Line);
             }
-
 
         }
 

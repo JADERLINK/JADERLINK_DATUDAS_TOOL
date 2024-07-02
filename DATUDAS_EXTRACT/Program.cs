@@ -9,19 +9,20 @@ namespace JADERLINK_DATUDAS_EXTRACT
 {
     class Program
     {
-        /*
-        program.exe
-        "Caminho do arquivo"
-        */
-
         static void Main(string[] args)
         {
-            Console.WriteLine("##############################");
-            Console.WriteLine("### JADERLINK DATUDAS TOOL ###");
-            Console.WriteLine("### VERSION 1.0.0.1        ###");
-            Console.WriteLine("##############################");
+            Console.WriteLine("# JADERLINK DATUDAS EXTRACT TOOL");
+            Console.WriteLine("# VERSION 1.0.2");
+            Console.WriteLine("# youtube.com/@JADERLINK");
 
-            if (args.Length > 0)
+            if (args.Length == 0)
+            {
+                Console.WriteLine("For more information read:");
+                Console.WriteLine("https://github.com/JADERLINK/JADERLINK_DATUDAS_TOOL");
+                Console.WriteLine("Press any key to close the console.");
+                Console.ReadKey();
+            }
+            else if (args.Length > 0 && File.Exists(args[0]))
             {
                 string file = args[0];
                 FileInfo info = null;
@@ -32,60 +33,59 @@ namespace JADERLINK_DATUDAS_EXTRACT
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("Error in the directory: " +Environment.NewLine + ex);
+                    Console.WriteLine("Error in the path: " + file + Environment.NewLine + ex);
                 }
 
                 if (info != null)
                 {
-                    if (info.Exists)
+                    if (info.Extension.ToUpperInvariant() == ".DAT"
+                     || info.Extension.ToUpperInvariant() == ".MAP"
+                     || info.Extension.ToUpperInvariant() == ".UDAS"
+                     )
                     {
-                        if (info.Extension.ToUpperInvariant() == ".DAT"
-                         || info.Extension.ToUpperInvariant() == ".MAP"
-                         || info.Extension.ToUpperInvariant() == ".UDAS"
-                         )
+                        FileFormat fileFormat = FileFormat.Null;
+                        switch (info.Extension.ToUpperInvariant())
                         {
-                            FileFormat fileFormat = FileFormat.Null;
-                            switch (info.Extension.ToUpperInvariant())
-                            {
-                                case ".DAT": fileFormat = FileFormat.DAT; break;
-                                case ".MAP": fileFormat = FileFormat.MAP; break;
-                                case ".UDAS": fileFormat = FileFormat.UDAS; break;
-                                default:
-                                    break;
-                            }
+                            case ".DAT": fileFormat = FileFormat.DAT; break;
+                            case ".MAP": fileFormat = FileFormat.MAP; break;
+                            case ".UDAS": fileFormat = FileFormat.UDAS; break;
+                            default:
+                                break;
+                        }
 
-                            Console.WriteLine("File: " + info.Name);
+                        Console.WriteLine("File: " + info.Name);
 
-
-                            if (fileFormat != FileFormat.Null)
+                        if (fileFormat != FileFormat.Null)
+                        {
+                            try
                             {
                                 _ = new Extract(info, fileFormat);
                             }
-                            else
+                            catch (Exception ex)
                             {
-                                Console.WriteLine("The extension was not detected: " + info.Extension);
+                                Console.WriteLine("Error: " + ex);
                             }
                         }
                         else
                         {
-                            Console.WriteLine("The extension is not valid: " + info.Extension);
+                            Console.WriteLine("The extension was not detected: " + info.Extension);
                         }
                     }
                     else
                     {
-                        Console.WriteLine("File specified does not exist.");
+                        Console.WriteLine("The extension is not valid: " + info.Extension);
                     }
+
                 }
             }
-            else 
+            else
             {
-                Console.WriteLine("Unspecified file directory.");
+                Console.WriteLine("File specified does not exist.");
             }
 
             Console.WriteLine("Finished!!!");
             Console.WriteLine("");
 
-            //Console.ReadKey();//remover no final
         }
     }
 }

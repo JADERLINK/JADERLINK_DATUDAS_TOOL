@@ -26,34 +26,41 @@ namespace JADERLINK_DATUDAS_REPACK
             {
                 Dictionary<string, string> pair = new Dictionary<string, string>();
 
-                List<string> lines = new List<string>();
 
                 string endLine = "";
                 while (endLine != null)
                 {
                     endLine = idxj.ReadLine();
-                    lines.Add(endLine);
+
+                    if (endLine != null)
+                    {
+                        endLine = endLine.Trim();
+
+                        if (!(endLine.Length == 0
+                            || endLine.StartsWith("#")
+                            || endLine.StartsWith("\\")
+                            || endLine.StartsWith("/")
+                            || endLine.StartsWith(":")
+                            || endLine.StartsWith("!")
+                            ))
+                        {
+                            var split = endLine.Split(new char[] { ':' });
+                            if (split.Length >= 2)
+                            {
+                                string key = split[0].ToUpperInvariant().Trim();
+                                if (!pair.ContainsKey(key))
+                                {
+                                    pair.Add(key, split[1].Trim());
+                                }
+                            }
+                        }
+                    }
+
                 }
 
                 idxj.Close();
 
-                foreach (var item in lines)
-                {
-                    if (item != null)
-                    {
-                        var split = item.Split(new char[] { ':' });
-                        if (split.Length >= 2)
-                        {
-                            string key = split[0].ToUpper().Trim();
-                            if (!pair.ContainsKey(key))
-                            {
-                                pair.Add(key, split[1]);
-                            }
-                        }
-                    }
-                }
-
-
+     
                 if (pair.ContainsKey("FILE_FORMAT") && pair.ContainsKey("DAT_AMOUNT"))
                 {
                     string FileFormat = pair["FILE_FORMAT"].ToUpperInvariant().Trim();
@@ -85,7 +92,7 @@ namespace JADERLINK_DATUDAS_REPACK
                             int datAmount = 0;
                             try
                             {
-                                datAmount = int.Parse(pair["DAT_AMOUNT"].Trim(), System.Globalization.NumberStyles.Integer);
+                                datAmount = int.Parse(pair["DAT_AMOUNT"].Trim(), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture);
                             }
                             catch (Exception ex)
                             {
@@ -128,10 +135,16 @@ namespace JADERLINK_DATUDAS_REPACK
 
                                 if (a.Exists)
                                 {
+                                    int aLength = (int)a.Length;
+                                    int aDiv = aLength / 16;
+                                    int aRest = aLength % 16;
+                                    aDiv += aRest != 0 ? 1 : 0;
+                                    aLength = aDiv * 16;
+
                                     datGroup[i].FileExits = true;
-                                    datFileBytesLenght += (int)a.Length;
-                                    datGroup[i].Length = (int)a.Length;
-                                    tempOffset += (int)a.Length;
+                                    datFileBytesLenght += aLength;
+                                    datGroup[i].Length = aLength;
+                                    tempOffset += aLength;
                                 }
                                 else 
                                 {
@@ -156,7 +169,7 @@ namespace JADERLINK_DATUDAS_REPACK
                                 {
                                     try
                                     {
-                                        udasGroup.SoundFlag = int.Parse(pair["UDAS_SOUNDFLAG"], System.Globalization.NumberStyles.Integer);
+                                        udasGroup.SoundFlag = int.Parse(pair["UDAS_SOUNDFLAG"], System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture);
                                         if (udasGroup.SoundFlag > 0xFF)
                                         {
                                             udasGroup.SoundFlag = 0xFF;
@@ -231,7 +244,6 @@ namespace JADERLINK_DATUDAS_REPACK
                     else 
                     {
                         Console.WriteLine("Invalid FILE_FORMAT: " + FileFormat);
-
                     }
                 }
                 else 
@@ -239,14 +251,9 @@ namespace JADERLINK_DATUDAS_REPACK
                     Console.WriteLine("Not found FILE_FORMAT or DAT_AMOUNT tag.");
                 }
 
-
-
             }
 
-
         }
-
-
 
     }
 }

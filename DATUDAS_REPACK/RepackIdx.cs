@@ -27,32 +27,39 @@ namespace JADERLINK_DATUDAS_REPACK
 
                 Dictionary<string, string> pair = new Dictionary<string, string>();
 
-                List<string> lines = new List<string>();
-
                 string endLine = "";
                 while (endLine != null)
                 {
                     endLine = idx.ReadLine();
-                    lines.Add(endLine);
+
+                    if (endLine != null)
+                    {
+                        endLine = endLine.Trim();
+
+                        if (!(endLine.Length == 0
+                            || endLine.StartsWith("#")
+                            || endLine.StartsWith("\\")
+                            || endLine.StartsWith("/")
+                            || endLine.StartsWith(":")
+                            || endLine.StartsWith("!")
+                            ))
+                        {
+                            var split = endLine.Split(new char[] { '=' });
+                            if (split.Length >= 2)
+                            {
+                                string key = split[0].ToUpperInvariant().Trim();
+                                if (!pair.ContainsKey(key))
+                                {
+                                    pair.Add(key, split[1].Trim());
+                                }
+                            }
+                        }
+
+                    }
+
                 }
 
                 idx.Close();
-
-                foreach (var item in lines)
-                {
-                    if (item != null)
-                    {
-                        var split = item.Split(new char[] { '=' });
-                        if (split.Length >= 2)
-                        {
-                            string key = split[0].ToUpper().Trim();
-                            if (!pair.ContainsKey(key))
-                            {
-                                pair.Add(key, split[1].Trim());
-                            }
-                        }
-                    }
-                }
 
                 //SoundFlag
                 
@@ -66,7 +73,7 @@ namespace JADERLINK_DATUDAS_REPACK
                     FileFormat = "udas";
                     try
                     {
-                        SoundFlag = int.Parse(pair["SOUNDFLAG"], System.Globalization.NumberStyles.Integer);
+                        SoundFlag = int.Parse(pair["SOUNDFLAG"], System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture);
                         if (SoundFlag > 0xFF)
                         {
                             SoundFlag = 0xFF;
@@ -94,13 +101,12 @@ namespace JADERLINK_DATUDAS_REPACK
                 if (stream != null)
                 {
 
-
                     //FileCount
                     if (pair.ContainsKey("FILECOUNT"))
                     {
                         try
                         {
-                            FileCount = int.Parse(pair["FILECOUNT"], System.Globalization.NumberStyles.Integer);
+                            FileCount = int.Parse(pair["FILECOUNT"], System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture);
                         }
                         catch (Exception ex)
                         {
@@ -113,8 +119,7 @@ namespace JADERLINK_DATUDAS_REPACK
                         Console.WriteLine("FileCount does not exist.");
                     }
 
-
-                    //  ////   // // / / / 
+                    //---------------
 
                     int datAmount = FileCount;
                     if (isUdas && SoundFlag > 0 && datAmount > 0)
@@ -135,10 +140,7 @@ namespace JADERLINK_DATUDAS_REPACK
                     }
                     datFileBytesLenght += datHeaderLenght;
 
-
-
-                    // /// 
-
+                    // --------------
 
                     // get files
                     for (int i = 0; i < datAmount; i++)
@@ -162,10 +164,16 @@ namespace JADERLINK_DATUDAS_REPACK
 
                         if (a.Exists)
                         {
+                            int aLength = (int)a.Length;
+                            int aDiv = aLength / 16;
+                            int aRest = aLength % 16;
+                            aDiv += aRest != 0 ? 1 : 0;
+                            aLength = aDiv * 16;
+
                             datGroup[i].FileExits = true;
-                            datFileBytesLenght += (int)a.Length;
-                            datGroup[i].Length = (int)a.Length;
-                            tempOffset += (int)a.Length;
+                            datFileBytesLenght += aLength;
+                            datGroup[i].Length = aLength;
+                            tempOffset += aLength;
                         }
                         else
                         {
