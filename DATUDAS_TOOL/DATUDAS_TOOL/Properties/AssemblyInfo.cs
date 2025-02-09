@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // As informações gerais sobre um assembly são controladas por
 // conjunto de atributos. Altere estes valores de atributo para modificar as informações
 // associadas a um assembly.
-[assembly: AssemblyTitle("JADERLINK DATUDAS REPACK")]
-[assembly: AssemblyDescription("JADERLINK DATUDAS REPACK")]
+[assembly: AssemblyTitle("JADERLINK_DATUDAS_TOOL")]
+[assembly: AssemblyDescription("JADERLINK_DATUDAS_TOOL")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("JADERLINK")]
-[assembly: AssemblyProduct("JADERLINK DATUDAS REPACK")]
-[assembly: AssemblyCopyright("Copyright ©JADERLINK 2024")]
+[assembly: AssemblyProduct("JADERLINK_DATUDAS_TOOL")]
+[assembly: AssemblyCopyright("Copyright ©JADERLINK 2025")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // O GUID a seguir será destinado à ID de typelib se este projeto for exposto para COM
-[assembly: Guid("bf9361a6-1ebf-405a-965a-5975bd0e4a4e")]
+[assembly: Guid("8e8c652d-8585-4202-9d2a-d1f35b959d98")]
 
 // As informações da versão de um assembly consistem nos quatro valores a seguir:
 //

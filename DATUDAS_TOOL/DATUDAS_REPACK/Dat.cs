@@ -5,12 +5,13 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 
-namespace JADERLINK_DATUDAS_REPACK
+
+namespace DATUDAS_REPACK
 {
     internal class Dat
     {
 
-        public Dat(FileStream stream, int DatHeaderLenght, DatInfo[] dat)
+        public Dat(FileStream stream, int DatHeaderLength, DatInfo[] dat)
         {
             byte[] headerCont = new byte[16];
             byte[] Amount = BitConverter.GetBytes(dat.Length);
@@ -32,7 +33,7 @@ namespace JADERLINK_DATUDAS_REPACK
                 stream.Write(name, 0, 4);
             }
 
-            byte[] complete = new byte[DatHeaderLenght - (16 + (4 * dat.Length * 2))];
+            byte[] complete = new byte[DatHeaderLength - (16 + (4 * dat.Length * 2))];
 
             if (complete.Length > 0)
             {

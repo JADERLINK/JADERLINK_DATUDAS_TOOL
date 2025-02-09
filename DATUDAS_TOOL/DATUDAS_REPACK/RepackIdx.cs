@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 
-namespace JADERLINK_DATUDAS_REPACK
+namespace DATUDAS_REPACK
 {
     internal class RepackIdx
     {
@@ -78,6 +78,8 @@ namespace JADERLINK_DATUDAS_REPACK
                         {
                             SoundFlag = 0xFF;
                         }
+
+                        Console.WriteLine("SoundFlag = " + SoundFlag.ToString());
                     }
                     catch (Exception ex)
                     {
@@ -89,7 +91,7 @@ namespace JADERLINK_DATUDAS_REPACK
 
                 try
                 {
-                    string EndFileName = info.FullName.Substring(0, info.FullName.Length - info.Extension.Length) + "." + FileFormat;
+                    string EndFileName = Path.ChangeExtension(info.FullName, FileFormat);
                     FileInfo EndFileInfo = new FileInfo(EndFileName);
                     stream = EndFileInfo.Create();
                 }
@@ -107,6 +109,8 @@ namespace JADERLINK_DATUDAS_REPACK
                         try
                         {
                             FileCount = int.Parse(pair["FILECOUNT"], System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture);
+
+                            Console.WriteLine("FileCount = " + FileCount.ToString());
                         }
                         catch (Exception ex)
                         {
@@ -129,18 +133,13 @@ namespace JADERLINK_DATUDAS_REPACK
 
                     DatInfo[] datGroup = new DatInfo[datAmount];
 
-                    int datFileBytesLenght = 0;
+                    //calc
+                    int datHeaderLength = 16 + (4 * datAmount * 2);
+                    int div = datHeaderLength / 32;
+                    float rest = (datHeaderLength % 32.0f);
+                    if (rest != 0) { datHeaderLength = (div + 1) * 32; }
+                    int datFileBytesLength = datHeaderLength;
 
-                    int datHeaderLenght = 16 + (4 * datAmount * 2);
-                    int div = (int)(datHeaderLenght / 32);
-                    float rest = (datHeaderLenght % 32.0f);
-                    if (rest != 0)
-                    {
-                        datHeaderLenght = (div + 1) * 32;
-                    }
-                    datFileBytesLenght += datHeaderLenght;
-
-                    // --------------
 
                     // get files
                     for (int i = 0; i < datAmount; i++)
@@ -151,13 +150,17 @@ namespace JADERLINK_DATUDAS_REPACK
                         {
                             dat.Path = pair[key];
                         }
+                        else
+                        {
+                            dat.Path = "null";
+                        }
                         datGroup[i] = dat;
                     }
 
-                    int tempOffset = datHeaderLenght;
+                    int tempOffset = datHeaderLength;
                     for (int i = 0; i < datAmount; i++)
                     {
-                        FileInfo a = new FileInfo(info.Directory + "\\" + datGroup[i].Path);
+                        FileInfo a = new FileInfo(Path.Combine(info.Directory.FullName, datGroup[i].Path));
                         datGroup[i].fileInfo = a;
                         datGroup[i].Extension = a.Extension.ToUpperInvariant().Replace(".", "").PadRight(4, (char)0x0).Substring(0, 4);
                         datGroup[i].Offset = tempOffset;
@@ -171,13 +174,15 @@ namespace JADERLINK_DATUDAS_REPACK
                             aLength = aDiv * 16;
 
                             datGroup[i].FileExits = true;
-                            datFileBytesLenght += aLength;
+                            datFileBytesLength += aLength;
                             datGroup[i].Length = aLength;
                             tempOffset += aLength;
+
+                            Console.WriteLine("File_" + i + " = " + datGroup[i].Path);
                         }
                         else
                         {
-                            Console.WriteLine("File_" + i + " - File does not exist: " + datGroup[i].Path);
+                            Console.WriteLine("File_" + i + " = " + datGroup[i].Path + "   (File does not exist!)");
                         }
 
                     }
@@ -186,40 +191,48 @@ namespace JADERLINK_DATUDAS_REPACK
                     if (isUdas)
                     {
                       
-                        DatInfo DasSnd = new DatInfo();
+                        DatInfo FileSND = new DatInfo();
 
                         if (SoundFlag > 0 && datAmount > 0)
                         {
                             string key = "FILE_" + (FileCount -1);
                             if (pair.ContainsKey(key))
                             {
-                                DasSnd.Path = pair[key];
+                                FileSND.Path = pair[key];
                             }
 
-                            FileInfo a = new FileInfo(info.Directory + "\\" + DasSnd.Path);
-                            DasSnd.fileInfo = a;
+                            FileInfo a = new FileInfo(Path.Combine(info.Directory.FullName, FileSND.Path));
+                            FileSND.fileInfo = a;
 
                             if (a.Exists)
                             {
-                                DasSnd.FileExits = true;
-                                DasSnd.Length = (int)a.Length;
+                                int aLength = (int)a.Length;
+                                int aDiv = aLength / 16;
+                                int aRest = aLength % 16;
+                                aDiv += aRest != 0 ? 1 : 0;
+                                aLength = aDiv * 16;
+
+                                FileSND.FileExits = true;
+                                FileSND.Length = aLength;
+
+                                Console.WriteLine("File_" + (FileCount - 1) + " = " + FileSND.Path);
                             }
                             else
                             {
-                                Console.WriteLine("File_" + (FileCount - 1) + " - File does not exist: " + DasSnd.Path);
+                                Console.WriteLine("File_" + (FileCount - 1) + " = " + FileSND.Path + "   (File does not exist!)");
                             }
                         }
 
                         UdasInfo udasGroup = new UdasInfo();
-                        udasGroup.datFileBytesLenght = datFileBytesLenght;
+                        udasGroup.datFileBytesLength = datFileBytesLength;
                         udasGroup.SoundFlag = SoundFlag;
-                        udasGroup.End = DasSnd;
+                        udasGroup.End = FileSND;
 
-                        _ = new Udas(stream, datHeaderLenght, datGroup, udasGroup);
+                        _ = new Udas(stream, datHeaderLength, datGroup, udasGroup);
                     }
                     else
                     {
-                        _ = new Dat(stream, datHeaderLenght, datGroup);
+                        _ = new Dat(stream, datHeaderLength, datGroup);
                     }
 
 

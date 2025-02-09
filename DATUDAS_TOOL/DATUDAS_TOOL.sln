@@ -1,0 +1,35 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.33130.400
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DATUDAS_TOOL", "DATUDAS_TOOL\DATUDAS_TOOL.csproj", "{8E8C652D-8585-4202-9D2A-D1F35B959D98}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "DATUDAS_EXTRACT", "DATUDAS_EXTRACT\DATUDAS_EXTRACT.shproj", "{57EA9C12-B229-41CF-8E96-7C474FE9DABF}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "DATUDAS_REPACK", "DATUDAS_REPACK\DATUDAS_REPACK.shproj", "{DC2804B3-721F-4ACE-9E84-2F349F64CE60}"
+EndProject
+Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		DATUDAS_EXTRACT\DATUDAS_EXTRACT.projitems*{57ea9c12-b229-41cf-8e96-7c474fe9dabf}*SharedItemsImports = 13
+		DATUDAS_EXTRACT\DATUDAS_EXTRACT.projitems*{8e8c652d-8585-4202-9d2a-d1f35b959d98}*SharedItemsImports = 4
+		DATUDAS_REPACK\DATUDAS_REPACK.projitems*{8e8c652d-8585-4202-9d2a-d1f35b959d98}*SharedItemsImports = 4
+		DATUDAS_REPACK\DATUDAS_REPACK.projitems*{dc2804b3-721f-4ace-9e84-2f349f64ce60}*SharedItemsImports = 13
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8E8C652D-8585-4202-9D2A-D1F35B959D98}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8E8C652D-8585-4202-9D2A-D1F35B959D98}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8E8C652D-8585-4202-9D2A-D1F35B959D98}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8E8C652D-8585-4202-9D2A-D1F35B959D98}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D728C454-5888-48B1-89C0-18798CBDEB30}
+	EndGlobalSection
+EndGlobal

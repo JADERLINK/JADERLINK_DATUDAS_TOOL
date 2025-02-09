@@ -5,23 +5,25 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 
-namespace JADERLINK_DATUDAS_REPACK
+
+namespace DATUDAS_REPACK
 {
     internal class Udas
     {
         public Udas(FileStream stream, int DatHeaderLenght, DatInfo[] dat, UdasInfo udasGroup) 
         {
-            byte[] TopBytes = new byte[0];
-            byte[] EndBytes = new byte[0];
-            byte[] MiddleBytes = new byte[0];
-            bool asEnd = false;
+            byte[] EndBytes = new byte[udasGroup.End.Length];
+            byte[] MiddleBytes = new byte[udasGroup.Middle.Length];
+            bool hasEnd = false;
 
             if (udasGroup.End.FileExits)
             {
                 try
                 {
-                    EndBytes = File.ReadAllBytes(udasGroup.End.fileInfo.FullName);
-                    asEnd = true;
+                    BinaryReader br = new BinaryReader(udasGroup.End.fileInfo.OpenRead());
+                    br.BaseStream.Read(EndBytes, 0, (int)udasGroup.End.fileInfo.Length);
+                    br.Close();
+                    hasEnd = true;
                 }
                 catch (Exception ex)
                 {
@@ -33,7 +35,9 @@ namespace JADERLINK_DATUDAS_REPACK
             {
                 try
                 {
-                    MiddleBytes = File.ReadAllBytes(udasGroup.Middle.fileInfo.FullName);
+                    BinaryReader br = new BinaryReader(udasGroup.Middle.fileInfo.OpenRead());
+                    br.BaseStream.Read(MiddleBytes, 0, (int)udasGroup.Middle.fileInfo.Length);
+                    br.Close();
                 }
                 catch (Exception ex)
                 {
@@ -41,35 +45,61 @@ namespace JADERLINK_DATUDAS_REPACK
                 }
             }
 
+            byte[] TopBytes = MakeUdasTop(udasGroup, hasEnd, dat.Length > 0);
+
+            stream.Write(TopBytes, 0, TopBytes.Length);
+
+            _ = new Dat(stream, DatHeaderLenght, dat);
+
+            if (MiddleBytes.Length != 0)
+            {
+                stream.Position = udasGroup.Middle.Offset;
+                stream.Write(MiddleBytes, 0, MiddleBytes.Length);
+            }
+
+            if (EndBytes.Length != 0)
+            {
+                stream.Position = udasGroup.End.Offset;
+                stream.Write(EndBytes, 0, EndBytes.Length);
+            }
+
+        }
+
+        public static byte[] MakeUdasTop(UdasInfo udasGroup, bool hasEnd, bool hasDat) 
+        {
+            byte[] TopBytes;
 
             if (udasGroup.Top.FileExits)
             {
                 try
                 {
-                    TopBytes = File.ReadAllBytes(udasGroup.Top.fileInfo.FullName);
+                    TopBytes = new byte[udasGroup.Top.Length];
+
+                    BinaryReader br = new BinaryReader(udasGroup.Top.fileInfo.OpenRead());
+                    br.BaseStream.Read(TopBytes, 0, (int)udasGroup.Top.fileInfo.Length);
+                    br.Close();
 
                     if (TopBytes.Length < 0x80)
                     {
-                        TopBytes = MakerTopBytes(asEnd, dat.Length > 0, udasGroup.SoundFlag);
+                        TopBytes = MakerNewTopBytes(hasEnd, hasDat, udasGroup.SoundFlag);
                         Console.WriteLine("Top file is less than 0x80 in size.");
                     }
                 }
                 catch (Exception ex)
                 {
-                    TopBytes = MakerTopBytes(asEnd, dat.Length > 0, udasGroup.SoundFlag);
+                    TopBytes = MakerNewTopBytes(hasEnd, hasDat, udasGroup.SoundFlag);
                     Console.WriteLine("Error to read file: " + udasGroup.Top.fileInfo.Name + Environment.NewLine + " ex: " + ex);
                 }
 
             }
-            else 
+            else
             {
-                TopBytes = MakerTopBytes(asEnd, dat.Length > 0, udasGroup.SoundFlag);
+                TopBytes = MakerNewTopBytes(hasEnd, hasDat, udasGroup.SoundFlag);
             }
 
+            //-----
 
-            // // // // 
-
-            uint firtPosition = BitConverter.ToUInt32(TopBytes, 0x2c);
+            uint firtPosition = BitConverter.ToUInt32(TopBytes, 0x2C);
             if (firtPosition != TopBytes.Length)
             {
                 var b = BitConverter.GetBytes((uint)TopBytes.Length);
@@ -80,11 +110,11 @@ namespace JADERLINK_DATUDAS_REPACK
                 firtPosition = (uint)TopBytes.Length;
             }
 
-            udasGroup.Middle.Offset = (int)firtPosition + udasGroup.datFileBytesLenght;
-            udasGroup.End.Offset = udasGroup.Middle.Offset + MiddleBytes.Length;
+            udasGroup.Middle.Offset = (int)firtPosition + udasGroup.datFileBytesLength;
+            udasGroup.End.Offset = udasGroup.Middle.Offset + udasGroup.Middle.Length;
 
 
-            if (dat.Length > 0)
+            if (hasDat)
             {
                 uint firstType = BitConverter.ToUInt32(TopBytes, 0x20);
                 if (firstType != 0)
@@ -95,13 +125,13 @@ namespace JADERLINK_DATUDAS_REPACK
                     TopBytes[0x23] = 0;
                 }
 
-                byte[] datlenght = BitConverter.GetBytes((uint)udasGroup.datFileBytesLenght);
-                TopBytes[0x24] = datlenght[0];
-                TopBytes[0x25] = datlenght[1];
-                TopBytes[0x26] = datlenght[2];
-                TopBytes[0x27] = datlenght[3];
+                byte[] datlength = BitConverter.GetBytes((uint)udasGroup.datFileBytesLength);
+                TopBytes[0x24] = datlength[0];
+                TopBytes[0x25] = datlength[1];
+                TopBytes[0x26] = datlength[2];
+                TopBytes[0x27] = datlength[3];
 
-                if (asEnd)
+                if (hasEnd)
                 {
                     byte[] endOffset = BitConverter.GetBytes((uint)udasGroup.End.Offset);
 
@@ -109,6 +139,8 @@ namespace JADERLINK_DATUDAS_REPACK
                     TopBytes[0x4D] = endOffset[1];
                     TopBytes[0x4E] = endOffset[2];
                     TopBytes[0x4F] = endOffset[3];
+
+
 
                     TopBytes[0x44] = 0;
                     TopBytes[0x45] = 0;
@@ -118,10 +150,12 @@ namespace JADERLINK_DATUDAS_REPACK
                     uint secondType = BitConverter.ToUInt32(TopBytes, 0x40);
                     if (secondType == 0xFFFFFFFF)
                     {
-                        TopBytes[0x40] = (byte)udasGroup.SoundFlag;
-                        TopBytes[0x41] = 0x00;
-                        TopBytes[0x42] = 0x00;
-                        TopBytes[0x43] = 0x00;
+                        byte[] SoundFlag = BitConverter.GetBytes((uint)udasGroup.SoundFlag);
+
+                        TopBytes[0x40] = SoundFlag[0];
+                        TopBytes[0x41] = SoundFlag[1];
+                        TopBytes[0x42] = SoundFlag[2];
+                        TopBytes[0x43] = SoundFlag[3];
                     }
 
                     TopBytes[0x60] = 0xFF;
@@ -137,11 +171,10 @@ namespace JADERLINK_DATUDAS_REPACK
                     TopBytes[0x43] = 0xFF;
                 }
 
-
             }
-            else 
+            else
             {
-                if (asEnd)
+                if (hasEnd)
                 {
                     byte[] endOffset = BitConverter.GetBytes((uint)udasGroup.End.Offset);
 
@@ -149,6 +182,8 @@ namespace JADERLINK_DATUDAS_REPACK
                     TopBytes[0x2D] = endOffset[1];
                     TopBytes[0x2E] = endOffset[2];
                     TopBytes[0x2F] = endOffset[3];
+
+
 
                     TopBytes[0x24] = 0;
                     TopBytes[0x25] = 0;
@@ -158,10 +193,12 @@ namespace JADERLINK_DATUDAS_REPACK
                     uint secondType = BitConverter.ToUInt32(TopBytes, 0x20);
                     if (secondType == 0xFFFFFFFF || secondType == 0)
                     {
-                        TopBytes[0x20] = (byte)udasGroup.SoundFlag;
-                        TopBytes[0x21] = 0x00;
-                        TopBytes[0x22] = 0x00;
-                        TopBytes[0x23] = 0x00;
+                        byte[] SoundFlag = BitConverter.GetBytes((uint)udasGroup.SoundFlag);
+
+                        TopBytes[0x20] = SoundFlag[0];
+                        TopBytes[0x21] = SoundFlag[1];
+                        TopBytes[0x22] = SoundFlag[2];
+                        TopBytes[0x23] = SoundFlag[3];
                     }
 
                     TopBytes[0x40] = 0xFF;
@@ -179,26 +216,10 @@ namespace JADERLINK_DATUDAS_REPACK
 
             }
 
-            stream.Write(TopBytes, 0, TopBytes.Length);
-
-            _ = new Dat(stream, DatHeaderLenght, dat);
-
-            if (MiddleBytes.Length != 0)
-            {
-                stream.Write(MiddleBytes, 0, MiddleBytes.Length);
-            }
-
-            if (EndBytes.Length != 0)
-            {
-                stream.Write(EndBytes, 0, EndBytes.Length);
-            }
-
+            return TopBytes;
         }
 
-
-
-
-        private byte[] MakerTopBytes(bool asEnd, bool asDat, int SoundFlag) 
+        private static byte[] MakerNewTopBytes(bool hasEnd, bool hasDat, int SoundFlag) 
         {
             byte[] top = new byte[0x400];
             int temp = 0;
@@ -211,27 +232,38 @@ namespace JADERLINK_DATUDAS_REPACK
                 temp += 4;
             }
 
-            top[0x2D] = 0x04; // offfset
 
-            if (asDat && asEnd)
+            top[0x2D] = 0x04; // offset; little endian
+
+            if (hasDat && hasEnd)
             {
-                top[0x40] = (byte)SoundFlag;//0x04;
+                byte[] soundFlag = BitConverter.GetBytes((uint)SoundFlag);
+
+                top[0x40] = soundFlag[0];
+                top[0x41] = soundFlag[1];
+                top[0x42] = soundFlag[2];
+                top[0x43] = soundFlag[3];
 
                 top[0x60] = 0xFF;
                 top[0x61] = 0xFF;
                 top[0x62] = 0xFF;
                 top[0x63] = 0xFF;
             }
-            else if (asDat && !asEnd)
+            else if (hasDat && !hasEnd)
             {
                 top[0x40] = 0xFF;
                 top[0x41] = 0xFF;
                 top[0x42] = 0xFF;
                 top[0x43] = 0xFF;
             }
-            else if (!asDat && asEnd)
+            else if (!hasDat && hasEnd)
             {
-                top[0x20] = (byte)SoundFlag;//0x04;
+                byte[] soundFlag = BitConverter.GetBytes((uint)SoundFlag);
+
+                top[0x20] = soundFlag[0];
+                top[0x21] = soundFlag[1];
+                top[0x22] = soundFlag[2];
+                top[0x23] = soundFlag[3];
 
                 top[0x40] = 0xFF;
                 top[0x41] = 0xFF;
@@ -249,22 +281,17 @@ namespace JADERLINK_DATUDAS_REPACK
             return top;
         }
 
-
-
     }
 
 
     internal class UdasInfo 
     {
-        public int datFileBytesLenght = 0;
+        public int datFileBytesLength = 0;
         public int SoundFlag = 4;
         public DatInfo Top = new DatInfo();
         public DatInfo Middle = new DatInfo();
         public DatInfo End = new DatInfo();
     }
-
-
-
 
 
 }

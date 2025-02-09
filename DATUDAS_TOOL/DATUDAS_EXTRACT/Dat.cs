@@ -5,34 +5,38 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 
-namespace JADERLINK_DATUDAS_EXTRACT
+    
+namespace DATUDAS_EXTRACT
 {
     internal class Dat
     {
         public int DatAmount = 0;
         public string[] DatFiles = null;
 
-        public Dat(StreamWriter idxj , Stream readStream, int offsetStart, int length, string diretory, string basename) 
+        public Dat(StreamWriter idxj , Stream readStream, uint offsetStart, uint length, string directory, string baseName) 
         {
             readStream.Position = offsetStart;
-            byte[] amountB = new byte[4];
-            readStream.Read(amountB, 0 , 4);
-            int amount = BitConverter.ToInt32(amountB, 0);
-            Console.WriteLine("Dat Amount: " + amount);
-            idxj.WriteLine("DAT_AMOUNT:" + amount);
+            BinaryReader br = new BinaryReader(readStream);
+            int amount = br.ReadInt32();
+            if (amount >= 0x010000)
+            {
+                Console.WriteLine("Invalid dat file!");
+                return;
+            }
+
+            idxj?.WriteLine("DAT_AMOUNT:" + amount);
             DatAmount = amount;
 
-            int blocklenght = amount * 4;
+            int blocklength = amount * 4;
 
-            byte[] offsetblock = new byte[blocklenght];
-            byte[] nameblock = new byte[blocklenght];
+            byte[] offsetblock = new byte[blocklength];
+            byte[] nameblock = new byte[blocklength];
 
             readStream.Position = offsetStart + 16;
 
-            readStream.Read(offsetblock, 0, blocklenght);
-            readStream.Read(nameblock, 0, blocklenght);
+            readStream.Read(offsetblock, 0, blocklength);
+            readStream.Read(nameblock, 0, blocklength);
 
-           
             KeyValuePair<int, string>[] fileList = new KeyValuePair<int, string>[amount];
 
             int Temp = 0;
@@ -42,7 +46,7 @@ namespace JADERLINK_DATUDAS_EXTRACT
                 string format = Encoding.ASCII.GetString(nameblock, Temp, 4);
                 format = ValidateFormat(format).ToUpperInvariant();
 
-                string FileFullName = basename + "\\" + basename + "_" + i.ToString("D3");
+                string FileFullName = Path.Combine(baseName, baseName + "_" + i.ToString("D3"));
                 if (format.Length > 0)
                 {
                     FileFullName += "." + format;
@@ -53,15 +57,15 @@ namespace JADERLINK_DATUDAS_EXTRACT
                 Temp += 4;
             }
 
-            if (!Directory.Exists(diretory + basename))
+            if (!Directory.Exists(Path.Combine(directory, baseName)))
             {
                 try
                 {
-                    Directory.CreateDirectory(diretory + basename);
+                    Directory.CreateDirectory(Path.Combine(directory, baseName));
                 }
                 catch (Exception)
                 {
-                    Console.WriteLine("Failed to create directory: " + diretory + basename);
+                    Console.WriteLine("Failed to create directory: " + Path.Combine(directory, baseName));
                 }
                
             }
@@ -72,25 +76,25 @@ namespace JADERLINK_DATUDAS_EXTRACT
             {
                 DatFiles[i] = fileList[i].Value;
 
-                int subFileLenght = 0;
+                int subFileLength;
                 if (i < fileList.Length - 1)
                 {
-                    subFileLenght = fileList[i + 1].Key - fileList[i].Key;
+                    subFileLength = fileList[i + 1].Key - fileList[i].Key;
                 }
                 else 
                 {
-                    subFileLenght = length - fileList[i].Key;
+                    subFileLength = (int)(length - fileList[i].Key);
                 }
 
                 readStream.Position = offsetStart + fileList[i].Key;
 
-                byte[] endfile = new byte[subFileLenght];
-                readStream.Read(endfile, 0, subFileLenght);
-                if (subFileLenght > 0)
+                byte[] endfile = new byte[subFileLength];
+                readStream.Read(endfile, 0, subFileLength);
+                if (subFileLength > 0)
                 {
                     try
                     {
-                        File.WriteAllBytes(diretory + fileList[i].Value, endfile);
+                        File.WriteAllBytes(Path.Combine(directory, fileList[i].Value), endfile);
                     }
                     catch (Exception ex)
                     {
@@ -100,7 +104,7 @@ namespace JADERLINK_DATUDAS_EXTRACT
                 }
 
                 string Line = "DAT_" + i.ToString("D3") + ":" + fileList[i].Value;
-                idxj.WriteLine(Line);
+                idxj?.WriteLine(Line);
             }
 
         }

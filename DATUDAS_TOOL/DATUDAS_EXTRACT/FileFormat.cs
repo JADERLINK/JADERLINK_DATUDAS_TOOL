@@ -4,13 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace JADERLINK_DATUDAS_EXTRACT
+namespace DATUDAS_EXTRACT
 {
     internal enum FileFormat
     {
+        Null,
         DAT,
         MAP,
         UDAS,
-        Null
+        DAS
     }
 }
