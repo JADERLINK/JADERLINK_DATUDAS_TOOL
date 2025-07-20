@@ -11,7 +11,6 @@ namespace DATUDAS_EXTRACT
         Null,
         DAT,
         MAP,
-        UDAS,
-        DAS
+        UDAS
     }
 }

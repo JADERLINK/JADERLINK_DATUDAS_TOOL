@@ -11,32 +11,40 @@ namespace DATUDAS_EXTRACT
     {
         public Extract(FileInfo info, FileFormat fileFormat, bool CreateIdx, bool CreateIdxJ) 
         {
-            FileStream stream = null;
+            FileStream stream;
+            try
+            {
+                stream = info.OpenRead();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error: " + ex);
+                return;
+            }
+
             StreamWriter idxj = null;
             StreamWriter idx_ = null;
 
             try
             {
-                stream = info.OpenRead();
-
-                if (CreateIdxJ || fileFormat == FileFormat.MAP || fileFormat == FileFormat.DAS)
+                if (CreateIdxJ || fileFormat == FileFormat.MAP)
                 {
-                    string idxjFileName = Path.ChangeExtension(info.FullName, ".idxJ");
-                    FileInfo idxjInfo = new FileInfo(idxjFileName);
+                    FileInfo idxjInfo = new FileInfo(Path.ChangeExtension(info.FullName, ".idxJ"));
                     idxj = idxjInfo.CreateText();
                 }
 
-                if (CreateIdx && fileFormat != FileFormat.MAP && fileFormat != FileFormat.DAS)
+                if (CreateIdx && fileFormat != FileFormat.MAP)
                 {
-                    string idx_FileName = Path.ChangeExtension(info.FullName, ".idx");
-                    FileInfo idx_Info = new FileInfo(idx_FileName);
+                    FileInfo idx_Info = new FileInfo(Path.ChangeExtension(info.FullName, ".idx"));
                     idx_ = idx_Info.CreateText();
                 }
 
             }
             catch (Exception ex)
             {
+                stream.Close();
                 Console.WriteLine("Error: " + ex);
+                return;
             }
 
             if (stream != null && (idxj != null || idx_ != null))
@@ -44,7 +52,7 @@ namespace DATUDAS_EXTRACT
                 idxj?.WriteLine("# github.com/JADERLINK/JADERLINK_DATUDAS_TOOL");
                 idxj?.WriteLine("# youtube.com/@JADERLINK");
                 idxj?.WriteLine("# JADERLINK DATUDAS TOOL By JADERLINK");
-                idxj?.WriteLine("TOOL_VERSION:V03");
+                idxj?.WriteLine("TOOL_VERSION:V04");
                 switch (fileFormat)
                 {
                     case FileFormat.DAT:
@@ -55,9 +63,6 @@ namespace DATUDAS_EXTRACT
                         break;
                     case FileFormat.UDAS:
                         idxj?.WriteLine("FILE_FORMAT:UDAS");
-                        break;
-                    case FileFormat.DAS:
-                        idxj?.WriteLine("FILE_FORMAT:DAS");
                         break;
                     default:
                         idxj?.WriteLine("FILE_FORMAT:NULL");
@@ -99,7 +104,7 @@ namespace DATUDAS_EXTRACT
 
                 }
 
-                else if (fileFormat == FileFormat.UDAS || fileFormat == FileFormat.DAS)
+                else if (fileFormat == FileFormat.UDAS)
                 {
                     try
                     {

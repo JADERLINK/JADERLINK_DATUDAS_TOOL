@@ -18,11 +18,11 @@ namespace DATUDAS_TOOL
             Console.WriteLine("# By: JADERLINK");
             Console.WriteLine("# youtube.com/@JADERLINK");
             Console.WriteLine("# github.com/JADERLINK");
-            Console.WriteLine("# VERSION 1.0.3 (2025-02-09)");
+            Console.WriteLine("# VERSION 1.0.4 (2025-07-20)");
 
 
             bool usingBatFile = false;
-            bool CreateIdx = true;
+            bool CreateIdx = false;
             bool CreateIdxJ = true;
             int start = 0;
             for (int i = 0; i < args.Length && i < 2; i++)
@@ -38,10 +38,10 @@ namespace DATUDAS_TOOL
                     CreateIdxJ = false;
                     start++;
                 }
-                else if (args[i].ToLowerInvariant() == "-idxj")
+                else if (args[i].ToLowerInvariant() == "-all")
                 {
                     CreateIdxJ = true;
-                    CreateIdx = false;
+                    CreateIdx = true;
                     start++;
                 }
             }
@@ -97,7 +97,7 @@ namespace DATUDAS_TOOL
             Console.WriteLine("File: " + fileInfo.Name);
             var Extension = fileInfo.Extension.ToUpperInvariant();
 
-            if (Extension == ".DAT" || Extension == ".MAP" || Extension == ".UDAS" || Extension == ".DAS")
+            if (Extension == ".DAT" || Extension == ".MAP" || Extension == ".UDAS")
             {
                 Console.WriteLine("Extract Mode!");
 
@@ -107,7 +107,6 @@ namespace DATUDAS_TOOL
                     case ".DAT": fileFormat = DATUDAS_EXTRACT.FileFormat.DAT; break;
                     case ".MAP": fileFormat = DATUDAS_EXTRACT.FileFormat.MAP; break;
                     case ".UDAS": fileFormat = DATUDAS_EXTRACT.FileFormat.UDAS; break;
-                    case ".DAS": fileFormat = DATUDAS_EXTRACT.FileFormat.DAS; break;
                 }
 
                 if (fileFormat != DATUDAS_EXTRACT.FileFormat.Null)

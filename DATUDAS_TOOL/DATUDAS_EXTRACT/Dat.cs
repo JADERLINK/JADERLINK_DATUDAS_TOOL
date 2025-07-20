@@ -20,8 +20,22 @@ namespace DATUDAS_EXTRACT
             int amount = br.ReadInt32();
             if (amount >= 0x010000)
             {
-                Console.WriteLine("Invalid dat file!");
+                Console.WriteLine("Invalid file!");
                 return;
+            }
+
+            if (!Directory.Exists(Path.Combine(directory, baseName)))
+            {
+                try
+                {
+                    Directory.CreateDirectory(Path.Combine(directory, baseName));
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Failed to create directory: " + Path.Combine(directory, baseName));
+                    Console.WriteLine(ex);
+                    return;
+                }
             }
 
             idxj?.WriteLine("DAT_AMOUNT:" + amount);
@@ -46,28 +60,15 @@ namespace DATUDAS_EXTRACT
                 string format = Encoding.ASCII.GetString(nameblock, Temp, 4);
                 format = ValidateFormat(format).ToUpperInvariant();
 
-                string FileFullName = Path.Combine(baseName, baseName + "_" + i.ToString("D3"));
+                string fullName = Path.Combine(baseName, baseName + "_" + i.ToString("D3"));
                 if (format.Length > 0)
                 {
-                    FileFullName += "." + format;
+                    fullName += "." + format;
                 }
 
-                fileList[i] = new KeyValuePair<int, string>(offset, FileFullName);
+                fileList[i] = new KeyValuePair<int, string>(offset, fullName);
 
                 Temp += 4;
-            }
-
-            if (!Directory.Exists(Path.Combine(directory, baseName)))
-            {
-                try
-                {
-                    Directory.CreateDirectory(Path.Combine(directory, baseName));
-                }
-                catch (Exception)
-                {
-                    Console.WriteLine("Failed to create directory: " + Path.Combine(directory, baseName));
-                }
-               
             }
 
             DatFiles = new string[amount];

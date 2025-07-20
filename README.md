@@ -1,6 +1,6 @@
 # **JADERLINK_DATUDAS_TOOL**
 
-Extract and Repack DAT/UDAS/MAP/DAS files (RE4 Little Endian) [2007/PS2/UHD/PS4/NS/RE4VR]
+Extract and Repack DAT/UDAS/MAP files (RE4 Little Endian) [2007/PS2/UHD/PS4/NS]
 
 **Info:**
 <br>License: MIT Licence
@@ -10,8 +10,14 @@ Extract and Repack DAT/UDAS/MAP/DAS files (RE4 Little Endian) [2007/PS2/UHD/PS4/
 
 ## Translate from Portuguese Brazil:
 
-Programa destinado à extração e reempacotamento dos arquivos DAT/UDAS/MAP/DAS do RE4 das versões Little Endian do jogo.
+Programa destinado à extração e reempacotamento dos arquivos DAT/UDAS/MAP do RE4 das versões Little Endian do jogo.
 <br>Criei esse programa como uma alternativa aos outros programas que têm a mesma proposta.
+
+**Update V.1.0.4**
+<br> Removido o suporte para os arquivos DAS do RE4VR, para esses arquivos use essa tool: [RE4_VR_OG_DAS_TOOLS](https://github.com/JADERLINK/RE4_VR_OG_DAS_TOOLS)
+<br> Agora, por padrão o programa só vai gerar o arquivo idxJ, mas ainda tem um bat para gerar o arquivo idx;
+<br> Feito melhorias na qualidade do código do programa;
+<br> Adicionado suporte ao Linux via mono e seu sistema de diretório;
 
 **Update V.1.0.3**
 <br>Unificado as duas tools em uma, adicionada compatibilidade aos arquivos "DAS" da versão de RE4VR. 
@@ -22,12 +28,12 @@ Programa destinado à extração e reempacotamento dos arquivos DAT/UDAS/MAP/DAS
 
 ## EXTRACT
 
-Destinado a extrair os arquivos dat/udas/map/das, o programa vai criar uma pasta com o nome do arquivo, que vai conter os arquivos extraídos (sem a existência de subpastas), e também vai gerar dois arquivos ".idxJ" (que é um formato próprio do programa) e ".idx" (que é igual à versão do "Son of Persia" e do "MarioKartN64").
+Destinado a extrair os arquivos dat/udas/map, o programa vai criar uma pasta com o nome do arquivo, que vai conter os arquivos extraídos (sem a existência de subpastas), e também vai gerar dois arquivos ".idxJ" (que é um formato próprio do programa) e ".idx" (que é igual à versão do "Son of Persia" e do "MarioKartN64").
 <br>Para recompilar o arquivo, será usado somente um dos arquivos .idx*.
 
 ## REPACK
 
-Destinado a reconstruir os arquivos dat/udas/map/das, ele aceita como entrada os arquivos ".idx" ou ".idxj", você precisa somente de 1 dos dois, veja as especificações dos arquivos mais abaixo.
+Destinado a reconstruir os arquivos dat/udas/map, ele aceita como entrada os arquivos ".idx" ou ".idxj", você precisa somente de 1 dos dois, veja as especificações dos arquivos mais abaixo.
 
 ## Arquivo .idxJ
 Explicação do arquivo, vou usar como exemplo o arquivo "r100.udas" como referência. Ao extrair, vai gerar o arquivo "r100.idxJ" (e o arquivo "r100.idx" que será explicado mais abaixo) uma pasta com o nome "r100" que vai ter os arquivos extraídos nela (sem subpastas).
@@ -42,9 +48,9 @@ Explicação do arquivo, vou usar como exemplo o arquivo "r100.udas" como refer�
 # youtube.com/@JADERLINK
 # JADERLINK DATUDAS TOOL By JADERLINK
 //versão de identificação do programa de extração
-TOOL_VERSION:V03
+TOOL_VERSION:V04
 //FILE_FORMAT formato do arquivo a ser recompilado
-// sendo os formados suportados: UDAS, DAT, MAP, DAS
+// sendo os formados suportados: UDAS, DAT, MAP
 FILE_FORMAT:UDAS
 //UDAS_TOP, arquivo opcional, não existe para os arquivos DAT/MAP
 // representa o header do udas, 
@@ -53,8 +59,8 @@ FILE_FORMAT:UDAS
 //para essa variável funcionar, você deve tirar o caracter ! do começo do nome.
 !UDAS_TOP:r100\r100_TOP.HEX
 // quantidade de arquivos que vão no Dat/Map,
-//no caso de se tratar de um arquivo Udas/das,
-//saiba que existe um arquivo dat dentro do Udas/das
+//no caso de se tratar de um arquivo Udas,
+//saiba que existe um arquivo dat dentro do Udas
 DAT_AMOUNT:51
 // listagem dos arquivos, para adicionar novos arquivos, basta seguir o padrão
 DAT_000:r100\r100_000.CAM
@@ -68,8 +74,8 @@ DAT_048:r100\r100_048.FCV
 DAT_049:r100\r100_049.FCV
 DAT_050:r100\r100_050.FCV
 //UDAS_SOUNDFLAG: tag exclusiva do Udas,
-// caso ela exista, significa que à um arquivo SND no final do arquivo Udas/das
-// a ausência dela, não haverá um arquivo no final do arquivo Udas/das
+// caso ela exista, significa que à um arquivo SND no final do arquivo Udas
+// a ausência dela, não haverá um arquivo no final do arquivo Udas
 UDAS_SOUNDFLAG:4
 // UDAS_MIDDLE, arquivo opcional, exclusiva do Udas,
 // representa os bytes entre o arquivos dat e snd do Udas,
@@ -125,4 +131,4 @@ File_51 = r100\r100_END.SND
 * Adicionado compatibilidade com os arquivos Dat e Map, basicamente dentro do Udas tem um arquivo Dat, e o arquivo Map é um arquivo Dat com outra extensão.
 
 **At.te: JADERLINK**
-<br>2025-02-09
+<br>2025-07-20

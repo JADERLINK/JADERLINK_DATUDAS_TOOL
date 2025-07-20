@@ -9,10 +9,10 @@ namespace DATUDAS_REPACK
 {
     internal class RepackJ
     {
-        public RepackJ(FileInfo info) 
+        public RepackJ(FileInfo info)
         {
-            StreamReader idxj = null;
-         
+            StreamReader idxj;
+
             try
             {
                 idxj = info.OpenText();
@@ -20,273 +20,254 @@ namespace DATUDAS_REPACK
             catch (Exception ex)
             {
                 Console.WriteLine("Error: " + ex);
+                return;
             }
 
-            if (idxj != null)
+            // continua só se idxj != null
+
+            string TOOL_VERSION = null;
+            string FILE_FORMAT = null;
+            uint DAT_AMOUNT = 0;
+            Dictionary<string, string> DatFiles = new Dictionary<string, string>();
+            string UDAS_TOP = null;
+            int UDAS_SOUNDFLAG = -1;
+            string UDAS_END = null;
+            string UDAS_MIDDLE = null;
+
+            while (!idxj.EndOfStream)
             {
-                Dictionary<string, string> pair = new Dictionary<string, string>();
+                string line = idxj.ReadLine()?.Trim();
 
-
-                string endLine = "";
-                while (endLine != null)
+                if (!(string.IsNullOrEmpty(line)
+                   || line.StartsWith("#")
+                   || line.StartsWith("\\")
+                   || line.StartsWith("/")
+                   || line.StartsWith(":")
+                   || line.StartsWith("!")
+                   || line.StartsWith("@")
+                ))
                 {
-                    endLine = idxj.ReadLine();
-
-                    if (endLine != null)
+                    var split = line.Split(new char[] { ':' });
+                    if (split.Length >= 2)
                     {
-                        endLine = endLine.Trim();
+                        string key = split[0].ToUpperInvariant().Trim();
+                        string value = split[1].Trim().Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar);
 
-                        if (!(endLine.Length == 0
-                            || endLine.StartsWith("#")
-                            || endLine.StartsWith("\\")
-                            || endLine.StartsWith("/")
-                            || endLine.StartsWith(":")
-                            || endLine.StartsWith("!")
-                            ))
+                        if (key.Contains("FILE_FORMAT"))
                         {
-                            var split = endLine.Split(new char[] { ':' });
-                            if (split.Length >= 2)
+                            FILE_FORMAT = value.ToUpperInvariant();
+                        }
+                        else if (key.Contains("TOOL_VERSION"))
+                        {
+                            TOOL_VERSION = value;
+                        }
+                        else if (key.Contains("UDAS_TOP"))
+                        {
+                            UDAS_TOP = value;
+                        }
+                        else if (key.Contains("UDAS_END"))
+                        {
+                            UDAS_END = value;
+                        }
+                        else if (key.Contains("UDAS_MIDDLE"))
+                        {
+                            UDAS_MIDDLE = value;
+                        }
+                        else if (key.Contains("UDAS_SOUNDFLAG"))
+                        {
+                            int.TryParse(value, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out UDAS_SOUNDFLAG);
+                        }
+                        else if (key.Contains("DAT_AMOUNT"))
+                        {
+                            uint.TryParse(value, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out DAT_AMOUNT);
+                        }
+                        else if (key.StartsWith("DAT_"))
+                        {
+                            if (!DatFiles.ContainsKey(key))
                             {
-                                string key = split[0].ToUpperInvariant().Trim();
-                                if (!pair.ContainsKey(key))
-                                {
-                                    pair.Add(key, split[1].Trim());
-                                }
+                                DatFiles.Add(key, value);
                             }
                         }
                     }
-
-                }
-
-                idxj.Close();
-
-     
-                if (pair.ContainsKey("FILE_FORMAT") && pair.ContainsKey("DAT_AMOUNT"))
-                {
-                    string FileFormat = pair["FILE_FORMAT"].ToUpperInvariant();
-
-                    if (FileFormat == "UDAS" || FileFormat == "DAT" || FileFormat == "MAP" || FileFormat == "DAS")
-                    {
-                        if (pair.ContainsKey("TOOL_VERSION"))
-                        {
-                            Console.WriteLine("TOOL_VERSION: " + pair["TOOL_VERSION"]);
-                        }
-
-                        Console.WriteLine("FILE_FORMAT: " + FileFormat);
-
-                        FileStream stream = null;
-
-                        try
-                        {
-                            string EndFileName = Path.ChangeExtension(info.FullName, FileFormat.ToLowerInvariant());
-                            FileInfo EndFileInfo = new FileInfo(EndFileName);
-                            stream = EndFileInfo.Create();
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine("Error: " + ex);
-                        }
-
-
-                        if (stream != null)
-                        {
-                            int datAmount = 0;
-                            try
-                            {
-                                datAmount = int.Parse(pair["DAT_AMOUNT"], System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture);
-
-                                Console.WriteLine("DAT_AMOUNT: " + datAmount.ToString());
-                            }
-                            catch (Exception ex)
-                            {
-                                Console.WriteLine("DAT_AMOUNT convert error: " + ex);
-                            }
-
-                            DatInfo[] datGroup = new DatInfo[datAmount];
-
-                            //calc
-                            int datHeaderLength = 16 + (4 * datAmount * 2);
-                            int div = datHeaderLength / 32;
-                            float rest = (datHeaderLength % 32.0f);
-                            if (rest != 0) { datHeaderLength = (div + 1) * 32; }
-                            int datFileBytesLength = datHeaderLength;
-
-
-                            // get files
-                            for (int i = 0; i < datAmount; i++)
-                            {
-                                DatInfo dat = new DatInfo();
-                                string key = "DAT_" + i.ToString("D3");
-                                if (pair.ContainsKey(key))
-                                {
-                                    dat.Path = pair[key];
-                                }
-                                else
-                                {
-                                    dat.Path = "null";
-                                }
-                                datGroup[i] = dat;
-                            }
-
-                            int tempOffset = datHeaderLength;
-                            for (int i = 0; i < datAmount; i++)
-                            {
-                                FileInfo a = new FileInfo(Path.Combine(info.Directory.FullName, datGroup[i].Path));
-                                datGroup[i].fileInfo = a;
-                                datGroup[i].Extension = a.Extension.ToUpperInvariant().Replace(".", "").PadRight(4, (char)0x0).Substring(0, 4);
-                                datGroup[i].Offset = tempOffset;
-
-                                if (a.Exists)
-                                {
-                                    int aLength = (int)a.Length;
-                                    int aDiv = aLength / 16;
-                                    int aRest = aLength % 16;
-                                    aDiv += aRest != 0 ? 1 : 0;
-                                    aLength = aDiv * 16;
-
-                                    datGroup[i].FileExits = true;
-                                    datFileBytesLength += aLength;
-                                    datGroup[i].Length = aLength;
-                                    tempOffset += aLength;
-
-                                    Console.WriteLine("DAT_" + i.ToString("D3") + ": " + datGroup[i].Path);
-                                }
-                                else 
-                                {
-                                    Console.WriteLine("DAT_" + i.ToString("D3") + ": " + datGroup[i].Path + "   (File does not exist!)");
-                                }
-                               
-                            }
-
-                     
-                            if (FileFormat == "DAT" || FileFormat == "MAP")
-                            {
-                                _ = new Dat(stream, datHeaderLength, datGroup);
-                            }
-
-
-                            if (FileFormat == "UDAS" || FileFormat == "DAS")
-                            {
-
-
-                                UdasInfo udasGroup = new UdasInfo();
-                                udasGroup.datFileBytesLength = datFileBytesLength;
-
-                                if (pair.ContainsKey("UDAS_SOUNDFLAG"))
-                                {
-                                    try
-                                    {
-                                        udasGroup.SoundFlag = int.Parse(pair["UDAS_SOUNDFLAG"], System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture);
-                                        if (udasGroup.SoundFlag > 0xFF)
-                                        {
-                                            udasGroup.SoundFlag = 0xFF;
-                                        }
-
-                                        Console.WriteLine("UDAS_SOUNDFLAG: " + udasGroup.SoundFlag.ToString());
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        Console.WriteLine("UDAS_SOUNDFLAG convert error: " + ex);
-                                    }
-                                }
-
-                                if (pair.ContainsKey("UDAS_END"))
-                                {
-                                    udasGroup.End.Path = pair["UDAS_END"];
-                                    FileInfo a = new FileInfo(Path.Combine(info.Directory.FullName, udasGroup.End.Path));
-                                    udasGroup.End.fileInfo = a;
-
-                                    if (a.Exists)
-                                    {
-                                        int aLength = (int)a.Length;
-                                        int aDiv = aLength / 16;
-                                        int aRest = aLength % 16;
-                                        aDiv += aRest != 0 ? 1 : 0;
-                                        aLength = aDiv * 16;
-
-                                        udasGroup.End.FileExits = true;
-                                        udasGroup.End.Length = aLength;
-
-                                        Console.WriteLine("UDAS_END: " + udasGroup.End.Path);
-                                    }
-                                    else
-                                    {
-                                        Console.WriteLine("UDAS_END: " + udasGroup.End.Path + "   (File does not exist!)");
-                                    }
-
-                                }
-
-                                if (pair.ContainsKey("UDAS_MIDDLE"))
-                                {
-                                    udasGroup.Middle.Path = pair["UDAS_MIDDLE"];
-                                    FileInfo a = new FileInfo(Path.Combine(info.Directory.FullName, udasGroup.Middle.Path));
-                                    udasGroup.Middle.fileInfo = a;
-
-                                    if (a.Exists)
-                                    {
-                                        int aLength = (int)a.Length;
-                                        int aDiv = aLength / 16;
-                                        int aRest = aLength % 16;
-                                        aDiv += aRest != 0 ? 1 : 0;
-                                        aLength = aDiv * 16;
-
-                                        udasGroup.Middle.FileExits = true;
-                                        udasGroup.Middle.Length = aLength;
-
-                                        Console.WriteLine("UDAS_MIDDLE: " + udasGroup.Middle.Path);
-                                    }
-                                    else
-                                    {
-                                        Console.WriteLine("UDAS_MIDDLE: " + udasGroup.Middle.Path + "   (File does not exist!)");
-                                    }
-                                }
-
-                                if (pair.ContainsKey("UDAS_TOP"))
-                                {
-                                    udasGroup.Top.Path = pair["UDAS_TOP"];
-                                    FileInfo a = new FileInfo(Path.Combine(info.Directory.FullName, udasGroup.Top.Path));
-                                    udasGroup.Top.fileInfo = a;
-
-                                    if (a.Exists)
-                                    {
-                                        int aLength = (int)a.Length;
-                                        int aDiv = aLength / 16;
-                                        int aRest = aLength % 16;
-                                        aDiv += aRest != 0 ? 1 : 0;
-                                        aLength = aDiv * 16;
-
-                                        udasGroup.Top.FileExits = true;
-                                        udasGroup.Top.Length = aLength;
-
-                                        Console.WriteLine("UDAS_TOP: " + udasGroup.Top.Path);
-                                    }
-                                    else
-                                    {
-                                        Console.WriteLine("UDAS_TOP: " + udasGroup.Top.Path + "   (File does not exist!)");
-                                    }
-                                }
-
-                                _ = new Udas(stream, datHeaderLength, datGroup, udasGroup);
-
-                            }
-
-                            stream.Close();
-                        }
-
-                    }
-                    else 
-                    {
-                        Console.WriteLine("Invalid FILE_FORMAT: " + FileFormat);
-                    }
-                }
-                else 
-                {
-                    Console.WriteLine("Not found FILE_FORMAT or DAT_AMOUNT tag.");
                 }
 
             }
 
+            idxj.Close();
+
+            if (FILE_FORMAT == null || !(FILE_FORMAT == "UDAS" || FILE_FORMAT == "DAT" || FILE_FORMAT == "MAP"))
+            {
+                Console.WriteLine("Invalid FILE_FORMAT!");
+                return;
+            }
+
+            if (DAT_AMOUNT == 0)
+            {
+                Console.WriteLine("DAT_AMOUNT cannot be 0!");
+                return;
+            }
+
+            if (TOOL_VERSION != null)
+            {
+                Console.WriteLine("TOOL_VERSION: " + TOOL_VERSION);
+            }
+
+            Console.WriteLine("FILE_FORMAT: " + FILE_FORMAT);
+            Console.WriteLine("DAT_AMOUNT: " + DAT_AMOUNT);
+
+            FileStream stream;
+
+            try
+            {
+                string endFileName = Path.ChangeExtension(info.FullName, FILE_FORMAT.ToLowerInvariant());
+                FileInfo endFileInfo = new FileInfo(endFileName);
+                stream = endFileInfo.Create();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error: " + ex);
+                return;
+            }
+
+            // continua só se stream != null
+
+            DatInfo[] datGroup = new DatInfo[DAT_AMOUNT];
+
+            //calc
+            uint fullDatHeaderLength = 16 + (4 * DAT_AMOUNT * 2);
+            fullDatHeaderLength = (((fullDatHeaderLength + 31) / 32) * 32);
+            uint datFileBytesLength = fullDatHeaderLength;
+
+
+            // get files
+            for (int i = 0; i < DAT_AMOUNT; i++)
+            {
+                DatInfo dat = new DatInfo();
+                string key = "DAT_" + i.ToString("D3");
+                if (DatFiles.ContainsKey(key))
+                {
+                    dat.Path = DatFiles[key];
+                }
+                else
+                {
+                    dat.Path = "null";
+                }
+                datGroup[i] = dat;
+            }
+
+            uint tempOffset = fullDatHeaderLength;
+            for (int i = 0; i < DAT_AMOUNT; i++)
+            {
+                FileInfo a = new FileInfo(Path.Combine(info.Directory.FullName, datGroup[i].Path));
+                datGroup[i].fileInfo = a;
+                datGroup[i].Extension = a.Extension.ToUpperInvariant().Replace(".", "").PadRight(4, (char)0x0).Substring(0, 4);
+                datGroup[i].Offset = tempOffset;
+
+                if (a.Exists)
+                {
+                    int aLength = (int)(((a.Length + 15) / 16) * 16);
+
+                    datGroup[i].FileExits = true;
+                    datFileBytesLength += (uint)aLength;
+                    datGroup[i].Length = aLength;
+                    tempOffset += (uint)aLength;
+
+                    Console.WriteLine("DAT_" + i.ToString("D3") + ": " + datGroup[i].Path);
+                }
+                else
+                {
+                    Console.WriteLine("DAT_" + i.ToString("D3") + ": " + datGroup[i].Path + "   (File does not exist!)");
+                }
+
+            }
+
+
+            if (FILE_FORMAT == "DAT" || FILE_FORMAT == "MAP")
+            {
+                _ = new Dat(stream, datGroup, 0);
+            }
+
+            else if (FILE_FORMAT == "UDAS")
+            {
+                UdasInfo udasGroup = new UdasInfo();
+                udasGroup.DatFileAlignedBytesLength = datFileBytesLength;
+                udasGroup.DatFileRealBytesLength = datFileBytesLength;
+                udasGroup.SoundFlag = UDAS_SOUNDFLAG;
+
+                Console.WriteLine("UDAS_SOUNDFLAG: " + UDAS_SOUNDFLAG.ToString("d"));
+
+
+                if (UDAS_END != null)
+                {
+                    udasGroup.End.Path = UDAS_END;
+                    FileInfo a = new FileInfo(Path.Combine(info.Directory.FullName, udasGroup.End.Path));
+                    udasGroup.End.fileInfo = a;
+
+                    if (a.Exists)
+                    {
+                        int aLength = (int)(((a.Length + 15) / 16) * 16);
+
+                        udasGroup.End.FileExits = true;
+                        udasGroup.End.Length = aLength;
+
+                        Console.WriteLine("UDAS_END: " + udasGroup.End.Path);
+                    }
+                    else
+                    {
+                        Console.WriteLine("UDAS_END: " + udasGroup.End.Path + "   (File does not exist!)");
+                    }
+
+                }
+
+                if (UDAS_MIDDLE != null)
+                {
+                    udasGroup.Middle.Path = UDAS_MIDDLE;
+                    FileInfo a = new FileInfo(Path.Combine(info.Directory.FullName, udasGroup.Middle.Path));
+                    udasGroup.Middle.fileInfo = a;
+
+                    if (a.Exists)
+                    {
+                        int aLength = (int)(((a.Length + 15) / 16) * 16);
+
+                        udasGroup.Middle.FileExits = true;
+                        udasGroup.Middle.Length = aLength;
+
+                        Console.WriteLine("UDAS_MIDDLE: " + udasGroup.Middle.Path);
+                    }
+                    else
+                    {
+                        Console.WriteLine("UDAS_MIDDLE: " + udasGroup.Middle.Path + "   (File does not exist!)");
+                    }
+                }
+
+                if (UDAS_TOP != null)
+                {
+                    udasGroup.Top.Path = UDAS_TOP;
+                    FileInfo a = new FileInfo(Path.Combine(info.Directory.FullName, udasGroup.Top.Path));
+                    udasGroup.Top.fileInfo = a;
+
+                    if (a.Exists)
+                    {
+                        int aLength = (int)(((a.Length + 15) / 16) * 16);
+
+                        udasGroup.Top.FileExits = true;
+                        udasGroup.Top.Length = aLength;
+
+                        Console.WriteLine("UDAS_TOP: " + udasGroup.Top.Path);
+                    }
+                    else
+                    {
+                        Console.WriteLine("UDAS_TOP: " + udasGroup.Top.Path + "   (File does not exist!)");
+                    }
+                }
+
+                _ = new Udas(stream, datGroup, udasGroup);
+
+            }
+
+            stream.Close();
         }
 
     }
+
 }

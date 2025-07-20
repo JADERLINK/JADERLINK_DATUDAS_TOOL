@@ -11,15 +11,12 @@ namespace DATUDAS_REPACK
     internal class Dat
     {
 
-        public Dat(FileStream stream, int DatHeaderLength, DatInfo[] dat)
+        public Dat(Stream stream, DatInfo[] dat, long StartOffset)
         {
+            stream.Position = StartOffset;
             byte[] headerCont = new byte[16];
-            byte[] Amount = BitConverter.GetBytes(dat.Length);
-            headerCont[0] = Amount[0];
-            headerCont[1] = Amount[1];
-            headerCont[2] = Amount[2];
-            headerCont[3] = Amount[3];
-            stream.Write(headerCont, 0, 16);
+            BitConverter.GetBytes((uint)dat.Length).CopyTo(headerCont, 0); //Amount
+            stream.Write(headerCont, 0, headerCont.Length);
 
             for (int i = 0; i < dat.Length; i++)
             {
@@ -33,30 +30,24 @@ namespace DATUDAS_REPACK
                 stream.Write(name, 0, 4);
             }
 
-            byte[] complete = new byte[DatHeaderLength - (16 + (4 * dat.Length * 2))];
-
-            if (complete.Length > 0)
-            {
-                stream.Write(complete, 0, complete.Length);
-            }
-
             for (int i = 0; i < dat.Length; i++)
             {
-                byte[] archive = new byte[dat[i].Length];
+                stream.Position = StartOffset + dat[i].Offset;
+
                 try
                 {
                     if (dat[i].FileExits)
                     {
-                        BinaryReader br = new BinaryReader(dat[i].fileInfo.OpenRead());
-                        br.BaseStream.Read(archive, 0, (int)dat[i].fileInfo.Length);
-                        br.Close();
+                        var reader = dat[i].fileInfo.OpenRead();
+                        reader.CopyTo(stream);
+                        reader.Close();
                     }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("Error to read file: " + dat[i].fileInfo.Name + Environment.NewLine + " ex: " + ex);
+                    Console.WriteLine("Error to read file: " + dat[i].fileInfo.Name);
+                    Console.WriteLine(ex);
                 }
-                stream.Write(archive, 0, archive.Length);
             }
 
         }
@@ -70,7 +61,7 @@ namespace DATUDAS_REPACK
         public FileInfo fileInfo = null;
         public string Extension = null;
         public int Length = 0;
-        public int Offset = 0;
+        public uint Offset = 0;
         public bool FileExits = false;
     }
 

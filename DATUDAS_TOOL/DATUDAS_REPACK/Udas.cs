@@ -10,7 +10,7 @@ namespace DATUDAS_REPACK
 {
     internal class Udas
     {
-        public Udas(FileStream stream, int DatHeaderLenght, DatInfo[] dat, UdasInfo udasGroup) 
+        public Udas(FileStream stream, DatInfo[] dat, UdasInfo udasGroup) 
         {
             byte[] EndBytes = new byte[udasGroup.End.Length];
             byte[] MiddleBytes = new byte[udasGroup.Middle.Length];
@@ -27,7 +27,8 @@ namespace DATUDAS_REPACK
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("Error to read file: " + udasGroup.End.fileInfo.Name + Environment.NewLine + " ex: " + ex);
+                    Console.WriteLine("Error to read file: " + udasGroup.End.fileInfo.Name);
+                    Console.WriteLine(ex);
                 }
             }
 
@@ -41,7 +42,8 @@ namespace DATUDAS_REPACK
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("Error to read file: " + udasGroup.Middle.fileInfo.Name + Environment.NewLine + " ex: " + ex);
+                    Console.WriteLine("Error to read file: " + udasGroup.Middle.fileInfo.Name);
+                    Console.WriteLine(ex);
                 }
             }
 
@@ -49,7 +51,7 @@ namespace DATUDAS_REPACK
 
             stream.Write(TopBytes, 0, TopBytes.Length);
 
-            _ = new Dat(stream, DatHeaderLenght, dat);
+            _ = new Dat(stream, dat, TopBytes.Length);
 
             if (MiddleBytes.Length != 0)
             {
@@ -82,13 +84,14 @@ namespace DATUDAS_REPACK
                     if (TopBytes.Length < 0x80)
                     {
                         TopBytes = MakerNewTopBytes(hasEnd, hasDat, udasGroup.SoundFlag);
-                        Console.WriteLine("Top file is less than 0x80 in size.");
+                        Console.WriteLine("Top file is less than 0x80 in size. It was replaced with a new one.");
                     }
                 }
                 catch (Exception ex)
                 {
                     TopBytes = MakerNewTopBytes(hasEnd, hasDat, udasGroup.SoundFlag);
-                    Console.WriteLine("Error to read file: " + udasGroup.Top.fileInfo.Name + Environment.NewLine + " ex: " + ex);
+                    Console.WriteLine("Error to read file: " + udasGroup.Top.fileInfo.Name);
+                    Console.WriteLine(ex);
                 }
 
             }
@@ -110,9 +113,8 @@ namespace DATUDAS_REPACK
                 firtPosition = (uint)TopBytes.Length;
             }
 
-            udasGroup.Middle.Offset = (int)firtPosition + udasGroup.datFileBytesLength;
-            udasGroup.End.Offset = udasGroup.Middle.Offset + udasGroup.Middle.Length;
-
+            udasGroup.Middle.Offset = firtPosition + udasGroup.DatFileAlignedBytesLength;
+            udasGroup.End.Offset = udasGroup.Middle.Offset + (uint)udasGroup.Middle.Length;
 
             if (hasDat)
             {
@@ -125,7 +127,7 @@ namespace DATUDAS_REPACK
                     TopBytes[0x23] = 0;
                 }
 
-                byte[] datlength = BitConverter.GetBytes((uint)udasGroup.datFileBytesLength);
+                byte[] datlength = BitConverter.GetBytes((uint)udasGroup.DatFileRealBytesLength);
                 TopBytes[0x24] = datlength[0];
                 TopBytes[0x25] = datlength[1];
                 TopBytes[0x26] = datlength[2];
@@ -286,7 +288,8 @@ namespace DATUDAS_REPACK
 
     internal class UdasInfo 
     {
-        public int datFileBytesLength = 0;
+        public uint DatFileAlignedBytesLength = 0;
+        public uint DatFileRealBytesLength = 0;
         public int SoundFlag = 4;
         public DatInfo Top = new DatInfo();
         public DatInfo Middle = new DatInfo();

@@ -15,8 +15,6 @@ namespace DATUDAS_EXTRACT
         public string[] DatFiles = null;
         public string SndPath = null;
 
-
-
         public Udas(StreamWriter idxj, Stream readStream, string directory, string baseName) 
         {
             BinaryReader br = new BinaryReader(readStream);
@@ -44,9 +42,9 @@ namespace DATUDAS_EXTRACT
                 temp += 32;
             }
 
-            if (UdasList[0].offset > readStream.Length)
+            if (UdasList.Count == 0 || UdasList[0].offset >= readStream.Length || UdasList[0].offset >= 0x01_00_00)
             {
-                Console.WriteLine("Error extracting UDAS file, first offset is invalid!");
+                Console.WriteLine("Error extracting file, first offset is invalid!");
                 return;
             }
 
@@ -58,9 +56,11 @@ namespace DATUDAS_EXTRACT
                     {
                         Directory.CreateDirectory(Path.Combine(directory, baseName));
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
                         Console.WriteLine("Failed to create directory: " + Path.Combine(directory, baseName));
+                        Console.WriteLine(ex);
+                        return;
                     }
                 }
 
@@ -70,16 +70,16 @@ namespace DATUDAS_EXTRACT
                 readStream.Position = 0;
                 readStream.Read(udasTop, 0, udasTopLength);
 
-                string FileFullName = Path.Combine(baseName, baseName + "_TOP.HEX");
-                idxj?.WriteLine("!UDAS_TOP:" + FileFullName);
+                string fullName = Path.Combine(baseName, baseName + "_TOP.HEX");
+                idxj?.WriteLine("!UDAS_TOP:" + fullName);
 
                 try
                 {
-                    File.WriteAllBytes(Path.Combine(directory, FileFullName), udasTop);
+                    File.WriteAllBytes(Path.Combine(directory, fullName), udasTop);
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(FileFullName + ": " + ex);
+                    Console.WriteLine(fullName + ": " + ex);
                 }         
 
             }
@@ -99,16 +99,16 @@ namespace DATUDAS_EXTRACT
                     readStream.Position = newOffset;
                     readStream.Read(udasMiddle, 0, newlength);
 
-                    string FileFullName = Path.Combine(baseName, baseName + "_MIDDLE.HEX");
-                    idxj?.WriteLine("!UDAS_MIDDLE:" + FileFullName);
+                    string fullName = Path.Combine(baseName, baseName + "_MIDDLE.HEX");
+                    idxj?.WriteLine("!UDAS_MIDDLE:" + fullName);
 
                     try
                     {
-                        File.WriteAllBytes(Path.Combine(directory, FileFullName), udasMiddle);
+                        File.WriteAllBytes(Path.Combine(directory, fullName), udasMiddle);
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine(FileFullName + ": " + ex);
+                        Console.WriteLine(fullName + ": " + ex);
                     }
                     
                 }
@@ -160,16 +160,16 @@ namespace DATUDAS_EXTRACT
                             readStream.Position = subOffset;
                             readStream.Read(udasMiddle, 0, subLength);
 
-                            string FileFullName = Path.Combine(baseName,  baseName + "_MIDDLE.HEX");
-                            idxj?.WriteLine("!UDAS_MIDDLE:" + FileFullName);
+                            string fullName = Path.Combine(baseName,  baseName + "_MIDDLE.HEX");
+                            idxj?.WriteLine("!UDAS_MIDDLE:" + fullName);
 
                             try
                             {
-                                File.WriteAllBytes(Path.Combine(directory, FileFullName), udasMiddle);
+                                File.WriteAllBytes(Path.Combine(directory, fullName), udasMiddle);
                             }
                             catch (Exception ex)
                             {
-                                Console.WriteLine(FileFullName + ": " + ex);
+                                Console.WriteLine(fullName + ": " + ex);
                             }
                         }
                     }
@@ -182,18 +182,18 @@ namespace DATUDAS_EXTRACT
                         readStream.Position = startOffset;
                         readStream.Read(udasEnd, 0, length);
 
-                        string FileFullNameEnd = Path.Combine(baseName, baseName + "_END.SND");
-                        idxj?.WriteLine("UDAS_END:" + FileFullNameEnd);
+                        string fullNameSND = Path.Combine(baseName, baseName + "_END.SND");
+                        idxj?.WriteLine("UDAS_END:" + fullNameSND);
 
-                        SndPath = FileFullNameEnd;
+                        SndPath = fullNameSND;
 
                         try
                         {
-                            File.WriteAllBytes(Path.Combine(directory, FileFullNameEnd), udasEnd);
+                            File.WriteAllBytes(Path.Combine(directory, fullNameSND), udasEnd);
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine(FileFullNameEnd + ": " + ex);
+                            Console.WriteLine(fullNameSND + ": " + ex);
                         }
  
                     }
@@ -214,16 +214,16 @@ namespace DATUDAS_EXTRACT
                         readStream.Position = startOffset;
                         readStream.Read(udasError, 0, length);
 
-                        string FileFullName = Path.Combine(baseName, baseName + $"_ERROR{i:D1}.HEX");
-                        idxj?.WriteLine($"# ERROR_FILE{i:D1}:" + FileFullName);
+                        string fullName = Path.Combine(baseName, baseName + $"_ERROR{i:D1}.HEX");
+                        idxj?.WriteLine($"# ERROR_FILE{i:D1}:" + fullName);
 
                         try
                         {
-                            File.WriteAllBytes(Path.Combine(directory, FileFullName), udasError);
+                            File.WriteAllBytes(Path.Combine(directory, fullName), udasError);
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine(FileFullName + ": " + ex);
+                            Console.WriteLine(fullName + ": " + ex);
                         }
 
                     }
